@@ -9,6 +9,10 @@
 #define WINDOW_X 1200
 #define WINDOW_Y 800
 
+#define GRAVITY 100.0f
+
+#define NUM_PARTICLES 1000
+
 
 int main() {
     // Create a window with a resolution of 800x600 using an initializer list for sf::Vector2u.
@@ -16,9 +20,9 @@ int main() {
 
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
-    std::vector<Particle> particles;
+    Particle particles[NUM_PARTICLES];
 
-    const sf::Vector2f gravity(0.f, 1000.0f);
+    const sf::Vector2f gravity(0.f, GRAVITY);
 
     for (int i = 0; i < 1000; ++i) {
         // Random position within the window bounds
@@ -38,8 +42,9 @@ int main() {
         float radius = 1.f;
         sf::Color color = sf::Color::White;
 
-        // Construct the particle and add it to the vector
-        particles.emplace_back(position, velocity, acceleration, radius, color);
+        Particle new_particle = Particle(position, velocity, acceleration, radius, color);
+        particles[i] = new_particle;
+
     }
 
     // Clock to measure time between frames
@@ -79,8 +84,8 @@ int main() {
         }
 
         // Check for collisions between particles
-        for (size_t i = 0; i < particles.size(); ++i) {
-            for (size_t j = i + 1; j < particles.size(); ++j) {
+        for (size_t i = 0; i < NUM_PARTICLES; ++i) {
+            for (size_t j = i + 1; j < NUM_PARTICLES; ++j) {
                 sf::Vector2f pos1 = particles[i].getPosition();
                 sf::Vector2f pos2 = particles[j].getPosition();
                 float r1 = particles[i].getRadius();
