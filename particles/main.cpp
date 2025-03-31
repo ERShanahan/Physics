@@ -88,7 +88,6 @@ int main() {
         accelerations(i, Y) = gravityY;
 
         // Construct the Particle object using pointers to the matrix row.
-        // We assume that the matrix stores data row-major, so &positions.data[i * DIMENSION] points to this particle's state.
         double* pos_ptr = &positions.data[i * DIMENSION];
         double* vel_ptr = &velocities.data[i * DIMENSION];
         double* acc_ptr = &accelerations.data[i * DIMENSION];
@@ -112,7 +111,6 @@ int main() {
 
         // Sync updated data to each Particle's shape and handle boundary collisions.
         for (int i = 0; i < NUM_PARTICLES; ++i) {
-            // Since particles reference matrix data, their pos/vel are already updated.
             particles[i]->handleBoundaryCollision(window.getSize());
             particles[i]->syncShape();
         }
@@ -191,7 +189,6 @@ int main() {
                             const auto &neighborParticles = grid[neighborKey];
                             for (int i : cellParticles) {
                                 for (int j : neighborParticles) {
-                                    // To avoid duplicate processing, you might restrict to i < j.
                                     if (i < j) {
                                         float x1 = static_cast<float>(particles[i]->pos[X]);
                                         float y1 = static_cast<float>(particles[i]->pos[Y]);
