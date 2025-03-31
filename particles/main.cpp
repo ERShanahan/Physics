@@ -1,5 +1,6 @@
 #define SFML_STATIC
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include <cstdlib>
 #include <cmath>
 #include <vector>
@@ -15,7 +16,7 @@
 
 #define GRAVITY 1000.0f
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 50000
 #define RADIUS 0.5f
 #define DIMENSION 2
 #define CELL_SIZE 10
@@ -58,6 +59,7 @@ int main() {
     if (numThreads == 0) {
         numThreads = 4; // fallback if hardware_concurrency() returns 0
     }
+    // std::cout << "Number of threads: " << numThreads << std::endl;
     std::vector<std::thread> threads;
 
     // Pre-allocate an array of Particle objects.
