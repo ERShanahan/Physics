@@ -10,16 +10,8 @@
 #include "particle.h"
 #include "matrix.h"
 #include "cblas.h"
+#include "defs.h"
 
-#define WINDOW_X 1200
-#define WINDOW_Y 800
-
-#define GRAVITY 1000.0f
-
-#define NUM_PARTICLES 50000
-#define RADIUS 0.5f
-#define DIMENSION 2
-#define CELL_SIZE 10
 #define X 0
 #define Y 1
 
@@ -41,9 +33,12 @@ CellKey computeCellKey(float x, float y) {
     return CellKey{static_cast<int>(x) / CELL_SIZE, static_cast<int>(y) / CELL_SIZE};
 }
 
-
 int main() {
     sf::RenderWindow window(sf::VideoMode({WINDOW_X, WINDOW_Y}), "Particle Simulation");
+
+    // Define the interaction radius and force magnitude.
+    const float interactionRadius = MOUSE_RADIUS;
+    const float forceMagnitude = MOUSE_FORCE;
 
     // Create matrices for positions, velocities, and accelerations.
     matrix positions(NUM_PARTICLES, DIMENSION);
@@ -103,6 +98,13 @@ int main() {
         }
 
         float dt = clock.restart().asSeconds();
+
+        // Get the current mouse position relative to the window.
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f mousePos = window.mapPixelToCoords(mousePixelPos);
+
+        // Compute the cell key for the mouse position.
+        CellKey mouseCell = computeCellKey(mousePos.x, mousePos.y);
 
         // Update positions: positions = positions + velocities * dt
         cblas_daxpy(positions.data.size(), dt, velocities.data.data(), 1, positions.data.data(), 1);
@@ -244,6 +246,42 @@ int main() {
             th.join();
         }
         threads.clear();
+
+        // Determine how many cells to check in each direction.
+        // This ensures we cover an area at least as large as the interaction radius.
+        int cellsToCheck = static_cast<int>(std::ceil(interactionRadius / CELL_SIZE));
+
+        // Loop over cells around the mouse cell.
+        for (int dx = -cellsToCheck; dx <= cellsToCheck; ++dx) {
+            for (int dy = -cellsToCheck; dy <= cellsToCheck; ++dy) {
+                CellKey cellKey{ mouseCell.x + dx, mouseCell.y + dy };
+                // Only process cells that exist in the grid.
+                if (grid.find(cellKey) != grid.end()) {
+                    const auto &cellParticles = grid[cellKey];
+                    // Process each particle in the current cell.
+                    for (int i : cellParticles) {
+                        float px = static_cast<float>(particles[i]->pos[X]);
+                        float py = static_cast<float>(particles[i]->pos[Y]);
+                        float diffX = px - mousePos.x;
+                        float diffY = py - mousePos.y;
+                        float dist2 = diffX * diffX + diffY * diffY;
+                        if (dist2 < interactionRadius * interactionRadius) {
+                            float distance = std::sqrt(dist2);
+                            if (distance < 1.0f) {
+                                distance = 1.0f; // Prevent division by zero.
+                            }
+                            // Normalize the vector.
+                            float nx = diffX / distance;
+                            float ny = diffY / distance;
+                            
+                            // Apply the force to the particle's velocity.
+                            particles[i]->vel[X] += nx * forceMagnitude * dt;
+                            particles[i]->vel[Y] += ny * forceMagnitude * dt;
+                        }
+                    }
+                }
+            }
+        }
 
         // Drawing.
         window.clear();

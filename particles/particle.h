@@ -2,8 +2,8 @@
 #define PARTICLE_H
 
 #include <SFML/Graphics.hpp>
+#include "defs.h"
 
-#define ENTROPY 0.2f
 
 class Particle {
 public:
