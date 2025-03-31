@@ -12,14 +12,16 @@ LDFLAGS = -L"C:/msys64/mingw64/lib" \
 # Name of the executable.
 TARGET = sim
 
-SRCS = main.cpp particle.cpp
+SRCS = main.cpp particle.cpp matrix.cpp
 OBJS = $(SRCS:.cpp=.o)
+
+LIBS      = -lole32 -L. -static -lopenblas
 
 # Default rule: compile the executable.
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS) $(LIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@	
