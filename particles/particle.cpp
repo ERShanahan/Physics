@@ -22,6 +22,7 @@ void Particle::handleBoundaryCollision(const sf::Vector2u& windowSize) {
     // Retrieve current position and velocity.
     float x = static_cast<float>(pos[0]);
     float y = static_cast<float>(pos[1]);
+
     float vx = static_cast<float>(vel[0]);
     float vy = static_cast<float>(vel[1]);
 
@@ -30,7 +31,7 @@ void Particle::handleBoundaryCollision(const sf::Vector2u& windowSize) {
         vx = -vx;
     // Bounce off top/bottom boundaries.
     if (y - radius < 0 || y + radius > windowSize.y)
-        vy = -vy * 0.99f;
+        vy = -vy * (1 - ENTROPY);
 
     // Update the velocity values.
     vel[0] = vx;

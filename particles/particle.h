@@ -3,6 +3,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#define ENTROPY 0.2f
+
 class Particle {
 public:
     // Pointers into the simulation matrices.
