@@ -3,24 +3,19 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include <cmath>
 #include "face.h"
 
 class cube {
 public:
-    sf::Vector2f origin;              // The 2D projection center of the cube.
-    std::vector<face> faces;          // The six faces of the cube.
-    std::vector<sf::Vector3f> baseNormals; // The original normals (unrotated).
+    sf::Vector2f origin;  // The 2D projection center (e.g. window center).
+    std::vector<face> faces;
 
-    float size;  // Edge length of the cube.
-    float rotX;  // Rotation angle around the X axis (in radians).
-    float rotY;  // Rotation angle around the Y axis (in radians).
+    float size;  // Cube edge length.
+    float rotX;  // Rotation angle about the X axis (in radians).
+    float rotY;  // Rotation angle about the Y axis (in radians).
 
-    cube(sf::Vector2f origin);
-
-    // Apply the current rotation to all base normals and update face geometry.
+    cube(sf::Vector2f origin, float size);
     void updateFaces();
-
     void draw(sf::RenderWindow &window);
 };
 

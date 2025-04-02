@@ -9,7 +9,7 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode({WINDOW_X, WINDOW_Y}), "Cube Hehe");
 
-    cube cube(sf::Vector2f(WINDOW_X / 2, WINDOW_Y / 2));
+    cube cube(sf::Vector2f(WINDOW_X / 2, WINDOW_Y / 2), CUBE_SIZE);
 
     while (window.isOpen()) {
         while (std::optional event = window.pollEvent()) {

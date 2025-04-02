@@ -1,17 +1,25 @@
 #include "face.h"
 #include <cmath>
 
-static sf::Vector3f multiply(const sf::Vector3f &v, float s) {
-    return sf::Vector3f(v.x * s, v.y * s, v.z * s);
-}
-static sf::Vector3f add(const sf::Vector3f &a, const sf::Vector3f &b) {
-    return sf::Vector3f(a.x + b.x, a.y + b.y, a.z + b.z);
-}
-static sf::Vector3f subtract(const sf::Vector3f &a, const sf::Vector3f &b) {
-    return sf::Vector3f(a.x - b.x, a.y - b.y, a.z - b.z);
+// --- Helper functions for vector math ---
+static sf::Vector3f cross(const sf::Vector3f &a, const sf::Vector3f &b) {
+    return sf::Vector3f(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    );
 }
 
-// Isometric projection function from 3D to 2D.
+static float length(const sf::Vector3f &v) {
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+static sf::Vector3f normalize(const sf::Vector3f &v) {
+    float len = length(v);
+    return (len == 0.f) ? v : sf::Vector3f(v.x / len, v.y / len, v.z / len);
+}
+
+// --- Isometric projection ---
 static sf::Vector2f project(const sf::Vector3f &point) {
     float angle = 30.f * 3.14159265f / 180.f;
     float cosA = std::cos(angle);
@@ -21,32 +29,24 @@ static sf::Vector2f project(const sf::Vector3f &point) {
     return sf::Vector2f(x2d, y2d);
 }
 
-static void calcShape(sf::ConvexShape &shape, const sf::Vector3f &normal, const sf::Vector2f &origin, float size) {
+// --- Recalculate the face shape given rotated vectors ---
+static void calcShape(sf::ConvexShape &shape,
+                        const sf::Vector3f &rotatedNormal,
+                        const sf::Vector3f &rotatedTangent1,
+                        const sf::Vector3f &rotatedTangent2,
+                        const sf::Vector2f &origin,
+                        float size)
+{
     float half = size / 2.0f;
+    // The center of the face (in 3D) is at rotatedNormal * half.
+    sf::Vector3f center = rotatedNormal * half;
 
-    // Determine two tangent vectors based on which axis the normal is primarily aligned with.
-    sf::Vector3f tangent1, tangent2;
-    if (std::abs(normal.x) > 0.001f) {
-        tangent1 = sf::Vector3f(0, 1, 0);
-        tangent2 = sf::Vector3f(0, 0, 1);
-    } else if (std::abs(normal.y) > 0.001f) {
-        tangent1 = sf::Vector3f(1, 0, 0);
-        tangent2 = sf::Vector3f(0, 0, 1);
-    } else { // normal.z is nonzero
-        tangent1 = sf::Vector3f(1, 0, 0);
-        tangent2 = sf::Vector3f(0, 1, 0);
-    }
+    // Compute the four corners (maintaining the initial vertex order).
+    sf::Vector3f p1 = center - rotatedTangent1 * half - rotatedTangent2 * half;
+    sf::Vector3f p2 = center + rotatedTangent1 * half - rotatedTangent2 * half;
+    sf::Vector3f p3 = center + rotatedTangent1 * half + rotatedTangent2 * half;
+    sf::Vector3f p4 = center - rotatedTangent1 * half + rotatedTangent2 * half;
 
-    // For a cube centered at the origin, the face center is the normal scaled by half the size.
-    sf::Vector3f center = multiply(normal, half);
-
-    // Compute the four corners of the face in 3D.
-    sf::Vector3f p1 = subtract(subtract(center, multiply(tangent1, half)), multiply(tangent2, half));
-    sf::Vector3f p2 = add(subtract(center, multiply(tangent2, half)), multiply(tangent1, half));
-    sf::Vector3f p3 = add(add(center, multiply(tangent1, half)), multiply(tangent2, half));
-    sf::Vector3f p4 = subtract(add(center, multiply(tangent2, half)), multiply(tangent1, half));
-
-    // Set up the convex shape using the projected 2D points (offset by the provided origin).
     shape.setPointCount(4);
     shape.setPoint(0, origin + project(p1));
     shape.setPoint(1, origin + project(p2));
@@ -54,15 +54,33 @@ static void calcShape(sf::ConvexShape &shape, const sf::Vector3f &normal, const 
     shape.setPoint(3, origin + project(p4));
 }
 
-face::face(sf::Vector3f normal, const sf::Vector2f &origin, float size)
-: normal(normal)
-{
-    calcShape(shape, normal, origin, size);
+face::face(sf::Vector3f normal, const sf::Vector2f &origin, float size) {
+    // Set the base normal.
+    baseNormal = normal;
+    // Choose a fixed “up” vector; if the normal is vertical, choose another.
+    sf::Vector3f up(0, 1, 0);
+    if (std::abs(normal.x) < 0.001f && std::abs(normal.z) < 0.001f) {
+        up = sf::Vector3f(1, 0, 0);
+    }
+    // Compute base tangent vectors that determine the face’s intrinsic orientation.
+    baseTangent1 = normalize(cross(baseNormal, up));
+    baseTangent2 = normalize(cross(baseNormal, baseTangent1));
+
+    // Initially, no rotation has been applied.
+    this->normal = baseNormal;
+
+    // Calculate the initial shape.
+    calcShape(shape, normal, baseTangent1, baseTangent2, origin, size);
 }
 
-void face::update(const sf::Vector3f &rotatedNormal, const sf::Vector2f &origin, float size) {
+void face::update(const sf::Vector3f &rotatedNormal,
+                  const sf::Vector3f &rotatedTangent1,
+                  const sf::Vector3f &rotatedTangent2,
+                  const sf::Vector2f &origin,
+                  float size)
+{
     normal = rotatedNormal;
-    calcShape(shape, normal, origin, size);
+    calcShape(shape, rotatedNormal, rotatedTangent1, rotatedTangent2, origin, size);
 }
 
 void face::draw(sf::RenderWindow &window) {
