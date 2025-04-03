@@ -1,4 +1,3 @@
-#define SFML_STATIC
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstdlib>
@@ -111,14 +110,10 @@ int main() {
         // Update velocities: velocities = velocities + accelerations * dt
         cblas_daxpy(positions.data.size(), dt, accelerations.data.data(), 1, velocities.data.data(), 1);
 
-        // Sync updated data to each Particle's shape and handle boundary collisions.
+        grid.clear();
         for (int i = 0; i < NUM_PARTICLES; ++i) {
             particles[i]->handleBoundaryCollision(window.getSize());
             particles[i]->syncShape();
-        }
-
-        grid.clear();
-        for (int i = 0; i < NUM_PARTICLES; ++i) {
             float x = static_cast<float>(particles[i]->pos[X]);
             float y = static_cast<float>(particles[i]->pos[Y]);
             CellKey key = computeCellKey(x, y);
@@ -284,6 +279,7 @@ int main() {
                 }
             }
         }   
+
         // Drawing.
         window.clear();
         for (int i = 0; i < NUM_PARTICLES; ++i) {
