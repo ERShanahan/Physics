@@ -30,12 +30,12 @@ cube::cube(sf::Vector2f origin, float size)
     };
 
     std::vector<sf::Color> colors = {
-        sf::Color::Red,     // Right
-        sf::Color::Magenta, // Left
-        sf::Color::Green,   // Top
-        sf::Color::Transparent,    // Bottom
-        sf::Color::Blue,    // Front
-        sf::Color::Yellow   // Back
+        sf::Color(100,100,100),     // Right
+        sf::Color(100,100,100), // Left
+        sf::Color::White,   // Top
+        sf::Color::White,    // Bottom
+        sf::Color::White,    // Front
+        sf::Color::White   // Back
     };
 
     // Create one face for each normal.
@@ -57,7 +57,13 @@ void cube::updateFaces() {
 }
 
 void cube::draw(sf::RenderWindow &window) {
+    sf::Vector3f viewVector(-1, 1, -1);
     for (auto &f : faces) {
-        f.draw(window);
+        float dotProduct = f.normal.x * viewVector.x +
+                           f.normal.y * viewVector.y +
+                           f.normal.z * viewVector.z;
+        if(dotProduct > 0){
+            f.draw(window);
+        }
     }
 }
