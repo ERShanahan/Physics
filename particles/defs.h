@@ -7,8 +7,8 @@
 #define GRAVITY 1000.0f
 #define ENTROPY 0.3f
 
-#define NUM_PARTICLES 60000
-#define RADIUS 0.5f
+#define NUM_PARTICLES 20000
+#define RADIUS 1.0f
 #define DIMENSION 2
 #define CELL_SIZE 10
 #define FILL 1
